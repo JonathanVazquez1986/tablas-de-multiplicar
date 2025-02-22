@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juego de Tablas de Multiplicar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+        }
+        .bounce {
+            animation: bounce 0.5s ease-in-out infinite alternate;
+        }
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-10px); }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center h-screen">
+
+    <div class="bg-white shadow-xl rounded-2xl p-8 text-center max-w-md w-full">
+        <h1 class="text-3xl font-bold text-blue-600">¡Practica las Tablas!</h1>
+        <p class="text-lg mt-2">Elige una tabla o juega en modo aleatorio:</p>
+        <select id="tablaSeleccionada" class="mt-2 p-2 border rounded-lg">
+            <option value="0">Aleatorio</option>
+            <option value="1">Tabla del 1</option>
+            <option value="2">Tabla del 2</option>
+            <option value="3">Tabla del 3</option>
+            <option value="4">Tabla del 4</option>
+            <option value="5">Tabla del 5</option>
+            <option value="6">Tabla del 6</option>
+            <option value="7">Tabla del 7</option>
+            <option value="8">Tabla del 8</option>
+            <option value="9">Tabla del 9</option>
+        </select>
+        
+        <p class="text-lg mt-2">Selecciona un nivel de dificultad:</p>
+        <select id="nivelDificultad" class="mt-2 p-2 border rounded-lg">
+            <option value="facil">Fácil</option>
+            <option value="medio">Medio</option>
+            <option value="dificil">Difícil</option>
+        </select>
+        
+        <p class="text-lg mt-2">Responde la multiplicación:</p>
+        <div class="text-2xl font-bold mt-4">
+            <span id="num1">?</span> × <span id="num2">?</span> =
+        </div>
+        <input id="respuesta" type="number" class="mt-4 p-2 border-2 border-blue-500 rounded-lg text-xl text-center w-24" placeholder="?" />
+        <button onclick="verificarRespuesta()" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg mt-4">
+            Verificar
+        </button>
+        <p id="mensaje" class="mt-4 text-xl"></p>
+        
+        <div class="mt-4 text-lg">
+            ✅ Aciertos: <span id="aciertos">0</span> | ❌ Errores: <span id="errores">0</span> | ⏳ Tiempo: <span id="tiempo">10</span>
+        </div>
+        <div class="mt-4 text-lg">
+            🏆 Mejor Puntuación: <span id="mejorPuntuacion">0</span>
+        </div>
+
+        <button onclick="reiniciarJuego()" class="mt-6 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg">
+            Reiniciar
+        </button>
+    </div>
+
+    <audio id="sonidoCorrecto" src="https://www.fesliyanstudios.com/play-mp3/4385"></audio>
+    <audio id="sonidoIncorrecto" src="https://www.fesliyanstudios.com/play-mp3/4386"></audio>
+
+    <script>
+        let aciertos = 0;
+        let errores = 0;
+        let mejorPuntuacion = 0;
+        let num1, num2, respuestaCorrecta;
+        let tiempoRestante;
+        let temporizador;
+
+        function nuevaPregunta() {
+            clearInterval(temporizador);
+            let tabla = parseInt(document.getElementById("tablaSeleccionada").value);
+            let nivel = document.getElementById("nivelDificultad").value;
+            
+            let rangoMax;
+            switch (nivel) {
+                case "facil": rangoMax = 5; tiempoRestante = 15; break;
+                case "medio": rangoMax = 9; tiempoRestante = 10; break;
+                case "dificil": rangoMax = 12; tiempoRestante = 7; break;
+            }
+            
+            num1 = tabla === 0 ? Math.floor(Math.random() * rangoMax) + 1 : tabla;
+            num2 = Math.floor(Math.random() * rangoMax) + 1;
+            respuestaCorrecta = num1 * num2;
+            document.getElementById("num1").textContent = num1;
+            document.getElementById("num2").textContent = num2;
+            document.getElementById("respuesta").value = "";
+            document.getElementById("mensaje").textContent = "";
+            document.getElementById("tiempo").textContent = tiempoRestante;
+            temporizador = setInterval(actualizarTiempo, 1000);
+        }
+
+        function actualizarTiempo() {
+            tiempoRestante--;
+            document.getElementById("tiempo").textContent = tiempoRestante;
+            if (tiempoRestante <= 0) {
+                clearInterval(temporizador);
+                document.getElementById("mensaje").textContent = "⏳ Se acabó el tiempo!";
+                errores++;
+                document.getElementById("errores").textContent = errores;
+                setTimeout(nuevaPregunta, 1000);
+            }
+        }
+
+        function verificarRespuesta() {
+            clearInterval(temporizador);
+            let respuestaUsuario = parseInt(document.getElementById("respuesta").value);
+            let mensaje = document.getElementById("mensaje");
+            let sonidoCorrecto = document.getElementById("sonidoCorrecto");
+            let sonidoIncorrecto = document.getElementById("sonidoIncorrecto");
+
+            if (respuestaUsuario === respuestaCorrecta) {
+                mensaje.textContent = "¡Bien hecho! 🎉";
+                mensaje.className = "text-green-600 font-bold bounce";
+                aciertos++;
+                sonidoCorrecto.play();
+            } else {
+                mensaje.textContent = "¡Inténtalo de nuevo! ❌";
+                mensaje.className = "text-red-600 font-bold";
+                errores++;
+                sonidoIncorrecto.play();
+            }
+            
+            document.getElementById("aciertos").textContent = aciertos;
+            document.getElementById("errores").textContent = errores;
+            
+            if (aciertos > mejorPuntuacion) {
+                mejorPuntuacion = aciertos;
+                document.getElementById("mejorPuntuacion").textContent = mejorPuntuacion;
+            }
+            
+            setTimeout(nuevaPregunta, 1000);
+        }
+
+        function reiniciarJuego() {
+            aciertos = 0;
+            errores = 0;
+            document.getElementById("aciertos").textContent = aciertos;
+            document.getElementById("errores").textContent = errores;
+            nuevaPregunta();
+        }
+
+        document.getElementById("tablaSeleccionada").addEventListener("change", nuevaPregunta);
+        document.getElementById("nivelDificultad").addEventListener("change", nuevaPregunta);
+        nuevaPregunta();
+    </script>
+</body>
+</html>
